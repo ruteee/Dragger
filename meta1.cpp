@@ -21,47 +21,62 @@ int main(int argc, char** argv)
     Mat cimg;
     int key = 0;
 
-    do {
 
     CvCapture* capture = 0;
-
     capture = cvCaptureFromCAM(CV_CAP_ANY); //0=default, -1=any camera, 1..99=your camera
     if (!capture) {
       cout << "No camera detected" << endl;
     }
-    // img = imread(f, 1);
-    img = cvQueryFrame(capture);
+    //const char* filename = argc >= 2 ? argv[1] : "board.jpg";
+    do {
+     //img = imread(filename, 1);
+        img = cvQueryFrame(capture);
+        Mat img_trabalho;
+        Mat img_configuracao;
+        img.copyTo(img_trabalho);
+        img.copyTo(img_configuracao);
 
-    imshow("Camera", img);
-    //waitKey(0);
 
-    cvtColor(img, cimg, COLOR_BGR2GRAY);
-    vector<Vec3f> circles(1);
-    GaussianBlur(cimg,cimg,  Size(9, 9), 0.5, 0.5);
-    HoughCircles(cimg, circles, CV_HOUGH_GRADIENT, 1, 8,
-                 100, 30, 1, 25 // change the last two parameters
-                                // (min_radius & max_radius) to detect larger circles
-                 );
-    for( size_t i = 0; i < circles.size(); i++ ){
-        Vec3i c = circles[i];
-        circle(img, Point(c[0], c[1]), c[2], Scalar(0,0,0), 3, CV_AA);
-        circle(img, Point(c[0], c[1]), c[2], Scalar(0,0,255),-1, 3, CV_AA);
-        //circle(img, Point(c[0], c[1]), 2, Scalar(0,255,0),-1, 3, CV_AA);
-    }
+        cvtColor(img, cimg, COLOR_BGR2GRAY);
+        vector<Vec3f> circles(1);
+        GaussianBlur(cimg,cimg,  Size(9, 9), 0.5, 0.5);
+        HoughCircles(cimg, circles, CV_HOUGH_GRADIENT, 1, 8,
+                     100, 30, 1, 25 // change the last two parameters
+                                    // (min_radius & max_radius) to detect larger circles
+                     );
 
-    HoughCircles(cimg, circles, CV_HOUGH_GRADIENT, 1, 10,
-                 100, 30, 20, 40 // change the last two parameters
-                                // (min_radius & max_radius) to detect larger circles
-                 );
-    for( size_t i = 0; i < circles.size(); i++ ){
-        Vec3i c = circles[i];
-        circle(img, Point(c[0], c[1]), c[2], Scalar(0,0,0), 3, CV_AA);
-        circle(img, Point(c[0], c[1]), c[2], Scalar(0,255,0),-1, 3, CV_AA);
-        //circle(img, Point(c[0], c[1]), 2, Scalar(0,255,0),-1, 3, CV_AA);
-    }
+         for( size_t i = 0; i < circles.size(); i++ ){
+             Vec3i c = circles[i];
+             circle(img_trabalho, Point(c[0], c[1]), c[2], Scalar(0,0,0), 3, CV_AA);
+             circle(img_trabalho, Point(c[0], c[1]), c[2], Scalar(0,0,255),-1, 3, CV_AA);
+         }
 
-    key = waitKey(100);
-    printf("Tecla: %d\n", key);
+        for( size_t i = 0; i < circles.size(); i++ ){
+            Vec3i c = circles[i];
+            circle(img_configuracao, Point(c[0], c[1]), 20, Scalar(0,0,255),-1, 3, CV_AA);
+        }
+
+        HoughCircles(cimg, circles, CV_HOUGH_GRADIENT, 1, 10,
+                     100, 30, 20, 38 // change the last two parameters
+                                    // (min_radius & max_radius) to detect larger circles
+                     );
+
+         for( size_t i = 0; i < circles.size(); i++ ){
+             Vec3i c = circles[i];
+             circle(img_trabalho, Point(c[0], c[1]), c[2], Scalar(0,0,0), 3, CV_AA);
+             circle(img_trabalho, Point(c[0], c[1]), c[2], Scalar(0,255,0),-1, 3, CV_AA);
+         }
+
+        for( size_t i = 0; i < circles.size(); i++ ){
+            Vec3i c = circles[i];
+            circle(img_configuracao, Point(c[0], c[1]), 10, Scalar(0,255,0),-1, 3, CV_AA);
+        }
+
+        imshow("Trabalho", img_trabalho);
+        imshow("Configuracao", img_configuracao);
+
+        key = waitKey(100);
+        printf("Tecla: %d\n", key);
 
   } while (key != 1048683 || key == -1);
   return 0;
