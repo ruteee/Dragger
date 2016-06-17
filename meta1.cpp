@@ -75,7 +75,7 @@ int main(int argc, char** argv)
         imshow("Trabalho", img_trabalho);
         imshow("Configuracao", img_configuracao);
 
-        key = waitKey(100);
+        key = waitKey(500);
         printf("Tecla: %d\n", key);
 
   } while (key != 1048683 || key == -1);

@@ -1,26 +1,40 @@
-
-#define DEBUG_LISTS 0
-#define DEBUG_LIST_LENGTHS_ONLY 0
-
+#include "armrulelib_novo.h"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include <stdio.h>
 #include <iostream>
 #include "stlastar.h" // See header for copyright and usage information
 #include <math.h>
-#include <vector>
 
 
 using namespace cv;
 using namespace std;
 
 
-static void help()
-{
-    cout << "\nThis program demonstrates circle finding with the Hough transform.\n"
-            "Usage:\n"
-            "./houghcircles <image_name>, Default is pic1.png\n" << endl;
+struct Ponto {
+    double x;
+    double y;
+    double z;
+    double phi;
+};
+
+vector<Ponto> rota;
+
+double px_cm_x(double x) {
+    return -23.057 + 0.98*x;
 }
+
+double px_cm_y(double x) {
+    return 23.728 - 0.105*x;
+}
+
+
+// static void help()
+// {
+//     cout << "\nThis program demonstrates circle finding with the Hough transform.\n"
+//             "Usage:\n"
+//             "./houghcircles <image_name>, Default is pic1.png\n" << endl;
+// }
 
 const int MAP_WIDTH = 640;
 const int MAP_HEIGHT = 480;
@@ -97,13 +111,11 @@ void MapSearchNode::PrintNodeInfo()
 // Here's the heuristic function that estimates the distance from a Node
 // to the Goal.
 
-float MapSearchNode::GoalDistanceEstimate( MapSearchNode &nodeGoal )
-{
+float MapSearchNode::GoalDistanceEstimate( MapSearchNode &nodeGoal ) {
 	return fabsf(x - nodeGoal.x) + fabsf(y - nodeGoal.y);
 }
 
-bool MapSearchNode::IsGoal( MapSearchNode &nodeGoal )
-{
+bool MapSearchNode::IsGoal( MapSearchNode &nodeGoal ) {
 
 	if( (x == nodeGoal.x) &&
 		(y == nodeGoal.y) )
@@ -175,21 +187,23 @@ bool MapSearchNode::GetSuccessors( AStarSearch<MapSearchNode> *astarsearch, MapS
 // of our map the answer is the map terrain value at this node since that is
 // conceptually where we're moving
 
-float MapSearchNode::GetCost( MapSearchNode &successor )
-{
+float MapSearchNode::GetCost( MapSearchNode &successor ) {
 	return (float) GetMap( x, y );
 
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
+    init();
+    soltar();
+    sleep(5);
     Mat hsv_img;
-    Mat yellow;
+    // Mat yellow;
     Mat img;
     Mat cimg;
     int key = 0;
 
 
+    int partida_x, partida_y, chegada_x, chegada_y;
     CvCapture* capture = 0;
     capture = cvCaptureFromCAM(CV_CAP_ANY); //0=default, -1=any camera, 1..99=your camera
     if (!capture) {
@@ -198,15 +212,15 @@ int main(int argc, char** argv)
     // const char* filename = argc >= 2 ? argv[1] : "board.jpg";
     // do {
         // img = imread(filename, 1);
-    	img = cvQueryFrame(capture);
-    	// imshow("Camera", img);
+        img = cvQueryFrame(capture);
+        // imshow("Camera", img);
         Mat img_new;
         Mat img_trabalho;
         Mat img_configuracao;
         img.copyTo(img_configuracao);
 
-        GaussianBlur(img, img_new,  Size(9, 9), 0.5, 0.5);
-    	cvtColor(img_new, hsv_img, COLOR_BGR2HSV);
+        GaussianBlur(img, img_new,  Size(9, 9), 4, 4);
+        cvtColor(img_new, hsv_img, COLOR_BGR2HSV);
 
         Mat yellow;
         inRange(hsv_img, Scalar(21, 100, 200),Scalar(30, 200, 255), yellow);
@@ -220,16 +234,15 @@ int main(int argc, char** argv)
         vector<Vec3f> circles(1);
         GaussianBlur(cimg,cimg,  Size(9, 9), 0.5, 0.5);
         HoughCircles(cimg, circles, CV_HOUGH_GRADIENT, 1, 8,
-                     100, 30, 1, 25 // change the last two parameters
+                     100, 30, 1, 30 // change the last two parameters
                                     // (min_radius & max_radius) to detect larger circles
                      );
 
         for( size_t i = 0; i < circles.size(); i++ ){
             Vec3i c = circles[i];
-            circle(branca, Point(c[0], c[1]), 35, Scalar(0,0,255),-1, 3, CV_AA);
+            circle(branca, Point(c[0], c[1]), 20, Scalar(0,0,255),-1, 3, CV_AA);
         }
 
-        int partida_x, partida_y, chegada_x, chegada_y;
         //Partida
         HoughCircles(yellow, circles, CV_HOUGH_GRADIENT, 1, 10,
                      100, 30, 20, 38 // change the last two parameters
@@ -284,15 +297,43 @@ int main(int argc, char** argv)
 
         a_star(partida_x, partida_y, chegada_x, chegada_y);
         imshow("Rota encontrada", branca);
-        waitKey(0);
-        // key = waitKey(100);
+        //waitKey(0);
+        key = waitKey(0);
         printf("Tecla: %d\n", key);
 
-  // } while (key != 107 || key == -1);
+  // } while (key != 3145835 || key == -1);
+
+    mover(px_cm_x(partida_x), px_cm_y(partida_y), 16, -90);
+    sleep(15);
+    mover(px_cm_x(partida_x), px_cm_y(partida_y), 10, -90);
+    sleep(5);
+
+    pegar();
+    sleep(5);
+
+    mover(px_cm_x(partida_x), px_cm_y(partida_y), 16, -90);
+    sleep(5);
+
+    for (unsigned int i = 0; i < rota.size(); i++) {
+        mover(px_cm_x(rota.at(i).x), px_cm_y(rota.at(i).y), rota.at(i).z, rota.at(i).phi);
+        usleep(50000);
+    }
+
+    mover(px_cm_x(chegada_x), px_cm_y(chegada_y), 10, -90);
+    sleep(5);
+
+    soltar();
+    sleep(5);
+
+    posicao_inicial();
+    sleep(15);
+
+    repouso();
+
   return 0;
 }
 
-void a_star(int partida_x, int partida_y, int chegada_x, int chegada_y){
+void a_star(int partida_x, int partida_y, int chegada_x, int chegada_y) {
 
     	AStarSearch<MapSearchNode> astarsearch;
 
@@ -320,50 +361,35 @@ void a_star(int partida_x, int partida_y, int chegada_x, int chegada_y){
     		unsigned int SearchState;
     		unsigned int SearchSteps = 0;
 
-    		do
-    		{
+    		do {
     			SearchState = astarsearch.SearchStep();
     			SearchSteps++;
-    		}
-    		while( SearchState == AStarSearch<MapSearchNode>::SEARCH_STATE_SEARCHING );
+    		} while( SearchState == AStarSearch<MapSearchNode>::SEARCH_STATE_SEARCHING );
 
-    		if( SearchState == AStarSearch<MapSearchNode>::SEARCH_STATE_SUCCEEDED )
-    		{
+    		if( SearchState == AStarSearch<MapSearchNode>::SEARCH_STATE_SUCCEEDED ) {
     			cout << "Search found goal state\n";
-
     				MapSearchNode *node = astarsearch.GetSolutionStart();
+                   
+    	   			// int steps = 0;
 
-    	#if DISPLAY_SOLUTION
-    				cout << "Displaying solution\n";
-    	#endif
-    				int steps = 0;
-
-    				node->PrintNodeInfo();
-    				for( ;; )
-    				{
-    					node = astarsearch.GetSolutionNext();
-    					if( !node )
-    					{
+                    circle(branca, Point(node->x, node->y), 1, Scalar(0,0,0),-1, 3, CV_AA);
+    				for( ;; ) {
+                        Ponto p2;
+                        node = astarsearch.GetSolutionNext();
+    					if( !node ) {
     						break;
     					}
-
+                        p2.x = node->x;
+                        p2.y = node->y;
+                        p2.z = 16;
+                        p2.phi = -90;
+                        rota.push_back(p2);
                         circle(branca, Point(node->x, node->y), 1, Scalar(0,0,0),-1, 3, CV_AA);
-    					node->PrintNodeInfo();
-    					steps ++;
-
     				};
-
-    				cout << "Solution steps " << steps << endl;
-
-    				// Once you're done with the solution you can free the nodes up
     				astarsearch.FreeSolutionNodes();
-
-
     		}
-    		else if( SearchState == AStarSearch<MapSearchNode>::SEARCH_STATE_FAILED )
-    		{
+    		else if( SearchState == AStarSearch<MapSearchNode>::SEARCH_STATE_FAILED ) {
     			cout << "Search terminated. Did not find goal state\n";
-
     		}
 
     		// Display the number of loops the search went through
@@ -374,3 +400,5 @@ void a_star(int partida_x, int partida_y, int chegada_x, int chegada_y){
     		astarsearch.EnsureMemoryFreed();
     	}
 }
+
+
