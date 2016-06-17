@@ -10,6 +10,7 @@
 using namespace cv;
 using namespace std;
 
+#define ALT 13
 
 struct Ponto {
     double x;
@@ -21,7 +22,7 @@ struct Ponto {
 vector<Ponto> rota;
 
 double px_cm_x(double x) {
-    return -23.057 + 0.98*x;
+    return -23.5 + 0.100*x;
 }
 
 double px_cm_y(double x) {
@@ -194,6 +195,7 @@ float MapSearchNode::GetCost( MapSearchNode &successor ) {
 
 int main(int argc, char** argv) {
     init();
+    posicao_inicial();
     soltar();
     sleep(5);
     Mat hsv_img;
@@ -223,24 +225,26 @@ int main(int argc, char** argv) {
         cvtColor(img_new, hsv_img, COLOR_BGR2HSV);
 
         Mat yellow;
-        inRange(hsv_img, Scalar(21, 100, 200),Scalar(30, 200, 255), yellow);
+        inRange(hsv_img, Scalar(10, 79, 195),Scalar(30, 248, 255), yellow);
         GaussianBlur(yellow, yellow, Size(9, 9), 4, 4);
-
+        
+        
         Mat blue;
-        inRange(hsv_img, Scalar(100, 60, 100), Scalar(120,210,210), blue);
+        inRange(hsv_img, Scalar(100, 200, 100), Scalar(120,240,210), blue);
         GaussianBlur(blue,blue,  Size(9, 9), 4, 4);
 
         cvtColor(img, cimg, COLOR_BGR2GRAY);
         vector<Vec3f> circles(1);
-        GaussianBlur(cimg,cimg,  Size(9, 9), 0.5, 0.5);
-        HoughCircles(cimg, circles, CV_HOUGH_GRADIENT, 1, 8,
-                     100, 30, 1, 30 // change the last two parameters
+
+        GaussianBlur(cimg,cimg,  Size(9, 9), 4, 4);
+        HoughCircles(cimg, circles, CV_HOUGH_GRADIENT, 1, 15,
+                     100, 30, 1, 28 // change the last two parameters
                                     // (min_radius & max_radius) to detect larger circles
                      );
 
         for( size_t i = 0; i < circles.size(); i++ ){
             Vec3i c = circles[i];
-            circle(branca, Point(c[0], c[1]), 20, Scalar(0,0,255),-1, 3, CV_AA);
+            circle(branca, Point(c[0], c[1]), 35, Scalar(0,0,255),-1, 3, CV_AA);
         }
 
         //Partida
@@ -270,7 +274,7 @@ int main(int argc, char** argv) {
 
          //Impressao do espaço de configuração
          imshow("Espaço de configuracao", branca);
-
+         waitKey(0);
         //mapeamento de osbtaculos
 
         bool partida = false;
@@ -303,7 +307,7 @@ int main(int argc, char** argv) {
 
   // } while (key != 3145835 || key == -1);
 
-    mover(px_cm_x(partida_x), px_cm_y(partida_y), 16, -90);
+    mover(px_cm_x(partida_x), px_cm_y(partida_y), ALT, -90);
     sleep(15);
     mover(px_cm_x(partida_x), px_cm_y(partida_y), 10, -90);
     sleep(5);
@@ -311,12 +315,13 @@ int main(int argc, char** argv) {
     pegar();
     sleep(5);
 
-    mover(px_cm_x(partida_x), px_cm_y(partida_y), 16, -90);
+    mover(px_cm_x(partida_x), px_cm_y(partida_y), ALT, -90);
     sleep(5);
 
     for (unsigned int i = 0; i < rota.size(); i++) {
-        mover(px_cm_x(rota.at(i).x), px_cm_y(rota.at(i).y), rota.at(i).z, rota.at(i).phi);
-        usleep(50000);
+        // printf("x: %lf\ty: %lf\tz: %lf\tphi: %lf\n", rota.at(i).x, rota.at(i).y, rota.at(i).z, rota.at(i).phi);
+        mover(rota.at(i).x, rota.at(i).y, rota.at(i).z, rota.at(i).phi);
+        usleep(100000);
     }
 
     mover(px_cm_x(chegada_x), px_cm_y(chegada_y), 10, -90);
@@ -379,10 +384,12 @@ void a_star(int partida_x, int partida_y, int chegada_x, int chegada_y) {
     					if( !node ) {
     						break;
     					}
-                        p2.x = node->x;
-                        p2.y = node->y;
-                        p2.z = 16;
+
+                        p2.x = px_cm_x(node->x);
+                        p2.y = px_cm_y(node->y);
+                        p2.z = ALT;
                         p2.phi = -90;
+                        // printf("x: %lf\ty: %lf\tz: %lf\tphi: %lf\n", p2.x, p2.y,p2.z, p2.phi);
                         rota.push_back(p2);
                         circle(branca, Point(node->x, node->y), 1, Scalar(0,0,0),-1, 3, CV_AA);
     				};

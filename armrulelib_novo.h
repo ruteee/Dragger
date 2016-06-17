@@ -30,28 +30,27 @@ void init() {
 		close(serial_retorno);
 	}
 	comando = (char*) malloc(sizeof(char)*BUFFSIZE);
-	posicao_inicial();
 }
 
 
 int calcular_posicao_base(float teta) {
-	int pos = 0.00623456790123454 * pow(teta, 2) - 9.95 * teta + 1345;
-	return trava(0, pos);
+	int pos = (int) (0.00623 * pow(teta, 2) - 9.95 * teta + 1345);
+	return pos;
 }
 
 int calcular_posicao_ombro(float teta) {
-	int pos = 0.00444444444444433 * pow(teta, 2) + 8.35555555555557 * teta + 649;
-	return pos;//trava(1, pos);
+	int pos = (int) (0.00444 * pow(teta, 2) + 8.35555 * teta + 649);
+	return pos;
 }
 
 int calcular_posicao_cotovelo(float teta) {
-	int pos = 0.0149794238683127 * pow(teta, 2) - 7.65185185185186 * teta + 803;
-	return pos;//trava(2, pos);
+	int pos = (int) (0.01497 * pow(teta, 2) - 7.65185 * teta + 803);
+	return pos;
 }
 
 int calcular_posicao_punho(float teta) {
-	int pos = -0.00277777777777781 * pow(teta, 2) + 10.1500000000000 * teta + 1503;
-	return trava(3, pos);
+	int pos = (int) (-0.00277 * pow(teta, 2) + 10.15 * teta + 1503);
+	return pos;
 }
 
 double degreesToRadians(double graus) {
@@ -103,7 +102,7 @@ void calcularCinematicaInversa(double posX, double posY, double posZ, double ori
 	thetaCotovelo = radiansToDegrees(thetaCotovelo);
 	thetaPunho = radiansToDegrees(thetaPunho);
   	sprintf(comando, "#0P%dS100#1P%dS100#2P%dS100#3P%dS100", calcular_posicao_base(thetaBase), calcular_posicao_ombro(thetaOmbro), calcular_posicao_cotovelo(thetaCotovelo), calcular_posicao_punho(thetaPunho)); 
-  	printf("%s\n", comando);
+  	// printf("%s\n", comando);
 	enviar_comando(comando, serial_retorno);
 }
 

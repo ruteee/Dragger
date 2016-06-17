@@ -39,7 +39,7 @@ int main(int argc, char** argv)
 
         cvtColor(img, cimg, COLOR_BGR2GRAY);
         vector<Vec3f> circles(1);
-        GaussianBlur(cimg,cimg,  Size(9, 9), 0.5, 0.5);
+        GaussianBlur(cimg,cimg,  Size(9, 9), 4, 4);
         HoughCircles(cimg, circles, CV_HOUGH_GRADIENT, 1, 8,
                      100, 30, 1, 25 // change the last two parameters
                                     // (min_radius & max_radius) to detect larger circles
